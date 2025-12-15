@@ -11,21 +11,42 @@ import { Card } from "@/components/ui/card";
 export default function Home() {
   const [longUrl, setLongUrl] = useState("");
   const [links, setLinks] = useState<
-    Array<{ id: string; longUrl: string; shortCode: string; createdAt: string }>
+    Array<{
+      id: string;
+      longUrl: string;
+      shortCode: string;
+      shortUrl?: string;
+      createdAt: string;
+    }>
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const savedLinks = localStorage.getItem("bitly-links");
-    if (savedLinks) {
-      setLinks(JSON.parse(savedLinks));
-    }
+    fetchLinks();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("shortenit-links", JSON.stringify(links));
-  }, [links]);
+  const fetchLinks = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/urls`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setLinks(
+          data.map((link: any) => ({
+            id: link.id,
+            longUrl: link.originalUrl,
+            shortCode: link.shortCode,
+            shortUrl: link.shortUrl,
+            createdAt: link.createdAt,
+          })).reverse()
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch links:", error);
+    }
+  };
 
   const generateShortCode = () => {
     return Math.random().toString(36).substring(2, 8);
@@ -47,20 +68,40 @@ export default function Home() {
       return;
     }
 
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shorten`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            originalUrl: longUrl,
+          }),
+        }
+      );
 
-    const shortCode = generateShortCode();
-    const newLink = {
-      id: Date.now().toString(),
-      longUrl,
-      shortCode,
-      createdAt: new Date().toISOString(),
-    };
+      if (!response.ok) {
+        throw new Error("Failed to shorten URL");
+      }
 
-    setLinks([newLink, ...links]);
-    setLongUrl("");
-    setIsLoading(false);
+      const data = await response.json();
+      const newLink = {
+        id: data.id,
+        longUrl: data.originalUrl,
+        shortCode: data.shortCode,
+        shortUrl: data.shortUrl,
+        createdAt: data.createdAt,
+      };
+
+      setLinks([newLink, ...links]);
+      setLongUrl("");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -147,7 +188,11 @@ export default function Home() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
                       <div className="flex-1 min-w-0 w-full">
                         <p className="font-mono text-sm font-semibold text-primary truncate">
-                          shortenit.ksx.app/{link.shortCode}
+                          {link.shortUrl ? (
+                            link.shortUrl.replace(/^https?:\/\//, "")
+                          ) : (
+                            `shortenit.freaks.dev/s/${link.shortCode}`
+                          )}
                         </p>
                         <p className="text-sm text-muted-foreground truncate">
                           {link.longUrl}
@@ -158,7 +203,7 @@ export default function Home() {
                         size="sm"
                         onClick={() =>
                           navigator.clipboard.writeText(
-                            `shortenit.ksx.app/${link.shortCode}`
+                            `${window.location.origin}/${link.shortCode}`
                           )
                         }
                         className="shrink-0 whitespace-nowrap w-full sm:w-auto"

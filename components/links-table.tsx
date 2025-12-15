@@ -16,6 +16,7 @@ interface LinksTableProps {
     longUrl: string;
     clicks: number;
     createdAt: string;
+    shortUrl?: string;
   }>;
 }
 

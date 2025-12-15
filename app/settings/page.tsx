@@ -43,6 +43,7 @@ export default function SettingsPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="mt-2"
+                  disabled
                 />
               </div>
               <div>

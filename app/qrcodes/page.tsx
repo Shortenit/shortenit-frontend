@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Download,
@@ -21,19 +21,9 @@ interface Url {
 
 const MOCK_URLS: Url[] = [
   {
-    shortCode: "abc123",
-    shortUrl: "https://shortenit.ksx.app/abc123",
-    originalUrl: "https://www.example.com/very/long/url/that/goes/on/and/on",
-  },
-  {
-    shortCode: "xyz789",
-    shortUrl: "https://shortenit.ksx.app/xyz789",
-    originalUrl: "https://github.com/user/repo",
-  },
-  {
-    shortCode: "qwe456",
-    shortUrl: "https://shortenit.ksx.app/qwe456",
-    originalUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    shortCode: "demo",
+    shortUrl: "https://shortenit.freaks.dev/s/demo",
+    originalUrl: "https://freaks.dev",
   },
 ];
 
@@ -56,6 +46,7 @@ const ERROR_LEVELS = [
 const PREVIEW_SIZE = 256;
 
 export default function QRCodesPage() {
+  const [urls, setUrls] = useState<Url[]>(MOCK_URLS);
   const [selectedUrl, setSelectedUrl] = useState<Url>(MOCK_URLS[0]);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
@@ -64,6 +55,35 @@ export default function QRCodesPage() {
   const [errorLevel, setErrorLevel] = useState<"L" | "M" | "Q" | "H">("M");
   const [logoUrl, setLogoUrl] = useState("");
   const [logoSize, setLogoSize] = useState(20);
+
+  useEffect(() => {
+    const fetchLinks = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/urls`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const fetchedUrls = data.map((link: any) => ({
+            shortCode: link.shortCode,
+            shortUrl:
+              link.shortUrl ||
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/s/${link.shortCode}`,
+            originalUrl: link.originalUrl,
+          })).reverse();
+          
+          if (fetchedUrls.length > 0) {
+            setUrls(fetchedUrls);
+            setSelectedUrl(fetchedUrls[0]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch links:", error);
+      }
+    };
+
+    fetchLinks();
+  }, []);
 
   const applyColorPreset = (preset: (typeof COLOR_PRESETS)[0]) => {
     setFgColor(preset.fg);
@@ -210,13 +230,13 @@ export default function QRCodesPage() {
                   value={selectedUrl.shortCode}
                   onChange={(e) =>
                     setSelectedUrl(
-                      MOCK_URLS.find((u) => u.shortCode === e.target.value) ||
-                        MOCK_URLS[0]
+                      urls.find((u) => u.shortCode === e.target.value) ||
+                        urls[0]
                     )
                   }
                   className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground"
                 >
-                  {MOCK_URLS.map((url) => (
+                  {urls.map((url) => (
                     <option key={url.shortCode} value={url.shortCode}>
                       {url.shortCode} - {url.originalUrl.substring(0, 40)}
                     </option>

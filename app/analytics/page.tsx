@@ -14,6 +14,7 @@ interface LinkData {
   longUrl: string;
   clicks: number;
   createdAt: string;
+  shortUrl?: string;
 }
 
 export default function AnalyticsPage() {
@@ -21,24 +22,36 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedLinks = localStorage.getItem("bitly-links");
-    const savedAnalytics = localStorage.getItem("bitly-analytics");
+    const fetchLinks = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/urls`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const enrichedLinks = data.map((link: any) => ({
+            id: link.id,
+            shortCode: link.shortCode,
+            longUrl: link.originalUrl,
+            clicks: link.clickCount || 0,
+            createdAt: link.createdAt,
+            shortUrl: link.shortUrl,
+          }));
 
-    if (savedLinks) {
-      const parsedLinks = JSON.parse(savedLinks);
-      const analyticsData = savedAnalytics ? JSON.parse(savedAnalytics) : {};
+          setLinks(
+            enrichedLinks.sort(
+              (a: LinkData, b: LinkData) => b.clicks - a.clicks
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch links:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      const enrichedLinks = parsedLinks.map((link: any) => ({
-        ...link,
-        clicks: analyticsData[link.shortCode] || 0,
-      }));
-
-      setLinks(
-        enrichedLinks.sort((a: LinkData, b: LinkData) => b.clicks - a.clicks)
-      );
-    }
-
-    setIsLoading(false);
+    fetchLinks();
   }, []);
 
   const totalLinks = links.length;
