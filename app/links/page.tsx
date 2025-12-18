@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Plus, BarChart2, Trash2, ChevronLeft, ChevronRight, Search, Check, Lock, AlertCircle } from "lucide-react";
+import { Copy, Plus, BarChart2, Trash2, ChevronLeft, ChevronRight, Search, Check, Lock, AlertCircle, QrCode } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -254,7 +254,7 @@ export default function LinksPage() {
                             />
                             <Button type="submit" className="w-full sm:w-auto">
                                 <Plus className="w-4 h-4 mr-2" />
-                                Shorten
+                                Shorten it
                             </Button>
                         </div>
 
@@ -284,7 +284,7 @@ export default function LinksPage() {
                                     <Input
                                         type="password"
                                         disabled
-                                        placeholder="Available in Pro plan"
+                                        placeholder="Coming soon..."
                                         className="opacity-50 cursor-not-allowed"
                                     />
                                 </div>
@@ -353,6 +353,11 @@ export default function LinksPage() {
                                     <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Clicks</div>
                                 </div>
                                 <div className="flex gap-2">
+                                    <Link href={`/qrcodes?code=${url.shortCode}`}>
+                                        <Button variant="outline" size="icon">
+                                            <QrCode className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
                                     <Link href={`/analytics/${url.shortCode}`}>
                                         <Button variant="outline" size="icon">
                                             <BarChart2 className="w-4 h-4" />

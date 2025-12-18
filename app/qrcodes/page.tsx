@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Download,
@@ -44,9 +45,21 @@ const ERROR_LEVELS = [
 ];
 
 const PREVIEW_SIZE = 256;
+const PAGE_SIZE = 10;
 
 export default function QRCodesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <QRCodesContent />
+    </Suspense>
+  );
+}
+
+function QRCodesContent() {
+  const searchParams = useSearchParams();
+  const initialCode = searchParams.get("code");
   const [urls, setUrls] = useState<Url[]>(MOCK_URLS);
+  const [page, setPage] = useState(0);
   const [selectedUrl, setSelectedUrl] = useState<Url>(MOCK_URLS[0]);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
@@ -74,7 +87,21 @@ export default function QRCodesPage() {
           
           if (fetchedUrls.length > 0) {
             setUrls(fetchedUrls);
-            setSelectedUrl(fetchedUrls[0]);
+            
+            if (initialCode) {
+              const preselected = fetchedUrls.find((u: Url) => u.shortCode === initialCode);
+              if (preselected) {
+                setSelectedUrl(preselected);
+                const index = fetchedUrls.indexOf(preselected);
+                if (index !== -1) {
+                  setPage(Math.floor(index / PAGE_SIZE));
+                }
+              } else {
+                 setSelectedUrl(fetchedUrls[0]);
+              }
+            } else {
+              setSelectedUrl(fetchedUrls[0]);
+            }
           }
         }
       } catch (error) {
@@ -83,7 +110,7 @@ export default function QRCodesPage() {
     };
 
     fetchLinks();
-  }, []);
+  }, [initialCode]);
 
   const applyColorPreset = (preset: (typeof COLOR_PRESETS)[0]) => {
     setFgColor(preset.fg);
@@ -226,22 +253,59 @@ export default function QRCodesPage() {
               {/* Select Link */}
               <div className="bg-card p-6 rounded-lg border border-border">
                 <h3 className="font-semibold mb-4">Select Link</h3>
-                <select
-                  value={selectedUrl.shortCode}
-                  onChange={(e) =>
-                    setSelectedUrl(
-                      urls.find((u) => u.shortCode === e.target.value) ||
-                        urls[0]
-                    )
-                  }
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground"
-                >
-                  {urls.map((url) => (
-                    <option key={url.shortCode} value={url.shortCode}>
-                      {url.shortCode} - {url.originalUrl.substring(0, 40)}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-4">
+                  <select
+                    value={selectedUrl.shortCode}
+                    onChange={(e) =>
+                      setSelectedUrl(
+                        urls.find((u) => u.shortCode === e.target.value) ||
+                          urls[0]
+                      )
+                    }
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground"
+                  >
+                    {urls
+                      .slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+                      .map((url) => (
+                        <option key={url.shortCode} value={url.shortCode}>
+                          {url.shortCode} - {url.originalUrl.substring(0, 40)}
+                        </option>
+                      ))}
+                  </select>
+                  
+                  {urls.length > PAGE_SIZE && (
+                    <div className="flex items-center justify-between text-sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-muted-foreground">
+                        Page {page + 1} of {Math.ceil(urls.length / PAGE_SIZE)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setPage((p) =>
+                            Math.min(
+                              Math.ceil(urls.length / PAGE_SIZE) - 1,
+                              p + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          page >= Math.ceil(urls.length / PAGE_SIZE) - 1
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Color Presets */}

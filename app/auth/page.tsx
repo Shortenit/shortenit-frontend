@@ -67,37 +67,21 @@ export default function LoginPage() {
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 mb-4 flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <rect
-                x="3"
-                y="3"
-                width="8"
-                height="8"
-                fill="white"
-                opacity="0.7"
+              <path
+                d="M1 1H11V11H1V1Z"
+                fill="#f25022"
               />
-              <rect
-                x="13"
-                y="3"
-                width="8"
-                height="8"
-                fill="white"
-                opacity="0.7"
+              <path
+                d="M13 1H23V11H13V1Z"
+                fill="#7fba00"
               />
-              <rect
-                x="3"
-                y="13"
-                width="8"
-                height="8"
-                fill="white"
-                opacity="0.7"
+              <path
+                d="M1 13H11V23H1V13Z"
+                fill="#00a4ef"
               />
-              <rect
-                x="13"
-                y="13"
-                width="8"
-                height="8"
-                fill="white"
-                opacity="0.7"
+              <path
+                d="M13 13H23V23H13V13Z"
+                fill="#ffb900"
               />
             </svg>
             {isLoading ? "Signing in..." : "Sign in with Microsoft"}

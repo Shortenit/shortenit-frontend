@@ -29,18 +29,22 @@ export default function Home() {
   const fetchLinks = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/urls`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/urls?page=0&size=5`
       );
       if (response.ok) {
+        console.log(response);
         const data = await response.json();
         setLinks(
-          data.map((link: any) => ({
-            id: link.id,
-            longUrl: link.originalUrl,
-            shortCode: link.shortCode,
-            shortUrl: link.shortUrl,
-            createdAt: link.createdAt,
-          })).reverse()
+          data
+            .map((link: any) => ({
+              id: link.id,
+              longUrl: link.originalUrl,
+              shortCode: link.shortCode,
+              shortUrl: link.shortUrl,
+              createdAt: link.createdAt,
+            }))
+            .reverse()
+            .slice(0, 5)
         );
       }
     } catch (error) {
@@ -141,7 +145,7 @@ export default function Home() {
                     disabled={isLoading}
                     className="px-6 md:px-8 bg-primary hover:bg-primary/90 whitespace-nowrap w-full sm:w-auto"
                   >
-                    {isLoading ? "Shortening..." : "Shorten"}
+                    {isLoading ? "Shortening..." : "Shorten it"}
                   </Button>
                 </div>
               </div>
